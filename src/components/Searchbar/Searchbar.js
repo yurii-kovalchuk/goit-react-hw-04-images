@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import {
   SearchWrapper,
@@ -37,7 +37,6 @@ export const Searchbar = ({ onSubmit }) => {
           placeholder="Search images and photos"
         />
       </SearchForm>
-      <ToastContainer />
     </SearchWrapper>
   );
 };

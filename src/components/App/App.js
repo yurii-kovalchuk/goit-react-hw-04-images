@@ -4,80 +4,76 @@ import 'react-toastify/dist/ReactToastify.css';
 import { Button } from 'components/Button/Button';
 import { ImageGallery } from 'components/ImageGallery/ImageGallery';
 import { Loader } from 'components/Loader/Loader';
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
 import { Searchbar } from '../Searchbar/Searchbar';
 import { AppWrapper } from './App.styled';
 
-export class App extends Component {
-  state = {
-    pictures: [],
-    query: '',
-    page: 1,
-    total: 0,
-    loader: false,
-  };
+export const App = () => {
+  const [pictures, setPictures] = useState([]);
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [loader, setLoader] = useState(false);
+  const [loadMore, setLoadMore] = useState(false);
 
-  handleSubmit = query => {
-    if (this.state.query === query) {
+  useEffect(() => {
+    if (query === '') {
       return;
     }
-    this.setState({ pictures: [], query, page: 1, total: 0 });
-  };
 
-  handleClick = () => {
-    this.setState(state => ({
-      page: state.page + 1,
-      total: 0,
-    }));
-  };
-
-  fetchGallery = async (query, page) => {
-    try {
-      this.setState({ loader: true });
-      const response = await axios.get('https://pixabay.com/api/', {
-        params: {
-          q: query,
-          page: page,
-          key: '31776776-892f87ec0bcca7b792e7dfca0',
-          image_type: 'photo',
-          orientation: 'horizontal',
-          per_page: '12',
-        },
-      });
-      const { hits, total } = response.data;
-      if (total === 0) {
-        toast('There are no pictures with this name');
-        return;
+    const fetchGallery = async () => {
+      try {
+        setLoadMore(false);
+        setLoader(true);
+        const response = await axios.get('https://pixabay.com/api/', {
+          params: {
+            q: query,
+            page: page,
+            key: '31776776-892f87ec0bcca7b792e7dfca0',
+            image_type: 'photo',
+            orientation: 'horizontal',
+            per_page: '12',
+          },
+        });
+        const { hits, total } = response.data;
+        if (total === 0) {
+          toast('There are no pictures with this name');
+          return;
+        }
+        setPictures(state => [...state, ...hits]);
+        if (total - page * 12 > 0) {
+          setLoadMore(true);
+        }
+      } catch (error) {
+        toast(error.message);
+        console.log(error);
+      } finally {
+        setLoader(false);
       }
-      this.setState(state => ({
-        pictures: [...state.pictures, ...hits],
-        total,
-      }));
-    } catch (error) {
-      toast(error.message);
-      console.log(error);
-    } finally {
-      this.setState({ loader: false });
+    };
+
+    fetchGallery();
+  }, [query, page]);
+
+  const handleSubmit = value => {
+    if (query === value) {
+      return;
     }
+    setPictures([]);
+    setQuery(value);
+    setPage(1);
   };
 
-  async componentDidUpdate(prevProps, prevState) {
-    const { query, page } = this.state;
-    if (prevState.query !== query || prevState.page !== page) {
-      await this.fetchGallery(query, page);
-    }
-  }
+  const handleClick = () => {
+    setPage(state => state + 1);
+  };
 
-  render() {
-    const { pictures, total, page, loader } = this.state;
-    return (
-      <AppWrapper>
-        <Searchbar onSubmit={this.handleSubmit} />
-        <ImageGallery pictures={pictures} />
-        {loader && <Loader />}
-        {total - page * 12 > 12 && <Button onClick={this.handleClick} />}
-        <ToastContainer />
-      </AppWrapper>
-    );
-  }
-}
+  return (
+    <AppWrapper>
+      <Searchbar onSubmit={handleSubmit} />
+      <ImageGallery pictures={pictures} />
+      {loader && <Loader />}
+      {loadMore && <Button onClick={handleClick} />}
+      <ToastContainer />
+    </AppWrapper>
+  );
+};
