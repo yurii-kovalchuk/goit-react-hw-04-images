@@ -20,6 +20,7 @@ export const Searchbar = ({ onSubmit }) => {
     }
 
     onSubmit(value);
+    e.target.reset();
   };
   return (
     <SearchWrapper>
